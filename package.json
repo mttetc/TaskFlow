@@ -1,19 +1,27 @@
 {
-  "name": "todos-express",
+  "name": "todo-monorepo",
   "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
+  "private": true,
+  "workspaces": {
+    "packages": ["server", "client"],
+    "nohoist": ["**"]
+  },
   "scripts": {
-    "dev": "node --watch --env-file=.env  --experimental-sqlite ./src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:server && npm run build:client",
+    "start:server": "cd server && npm run start",
+    "start:client": "cd client && npm run preview",
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Fullstack todo application that uses a nodejs backend",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2"
+  "description": "A dockerized full stack todo application that uses a NodeJS server, a PostgreSQL database, a Prisma ORM, and JWT Authentication.",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

