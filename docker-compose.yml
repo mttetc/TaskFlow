@@ -1,51 +1,69 @@
-version: '3'
+version: '3.8'
 services:
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: todo-client
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://server:5003
-    depends_on:
-      - server
-
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: todo-server
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/todoapp
-      - JWT_SECRET=jwt-secret-key-development-only
-      - CSRF_SECRET=csrf-secret-key-development-only
-      - COOKIE_SECRET=cookie-secret-development-only
-      - NODE_ENV=development
-      - PORT=5003
-    ports:
-      - "5003:5003"
-    depends_on:
-      - db
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-
   db:
-    image: postgres:13-alpine
-    container_name: postgres-db
+    container_name: taskflow-db
+    image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=todoapp
+      - POSTGRES_DB=taskflow
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskflow-network
+
+  server:
+    container_name: taskflow-server
+    build: 
+      context: ./server
+      target: development
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/taskflow?schema=public
+      - JWT_SECRET=your-secret-key
+      - CSRF_SECRET=your-csrf-secret
+      - NODE_ENV=development
+      - CLIENT_URL=http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - taskflow-network
+
+  client:
+    container_name: taskflow-client
+    build:
+      context: ./client
+      target: development
+    command: npm run dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - taskflow-network
+
+networks:
+  taskflow-network:
+    driver: bridge
 
 volumes:
   postgres_data:

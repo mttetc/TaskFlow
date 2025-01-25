@@ -17,13 +17,38 @@ const { generateToken, doubleCsrfProtection } = doubleCsrf({
   },
   size: 64,
   getTokenFromRequest: (req) => {
+    console.log('CSRF Headers:', {
+      all: req.headers,
+      csrfToken: req.headers['csrf-token'],
+      cookies: req.cookies
+    });
     const token = req.headers['csrf-token'];
     return Array.isArray(token) ? token[0] : token;
   },
 });
 
-// CSRF protection middleware
-const csrfProtection = doubleCsrfProtection;
+// Custom CSRF protection middleware with logging
+const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
+  console.log('CSRF Protection Middleware:', {
+    method: req.method,
+    path: req.path,
+    headers: req.headers,
+    cookies: req.cookies
+  });
+
+  try {
+    doubleCsrfProtection(req, res, (err: any) => {
+      if (err) {
+        console.error('CSRF Protection Error:', err);
+        return res.status(403).json({ error: 'CSRF validation failed', details: err.message });
+      }
+      next();
+    });
+  } catch (error) {
+    console.error('CSRF Protection Exception:', error);
+    return res.status(403).json({ error: 'CSRF validation failed', details: error instanceof Error ? error.message : 'Unknown error' });
+  }
+};
 
 const authMiddleware = (req: Request & AuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies.token;
@@ -47,7 +72,7 @@ const authMiddleware = (req: Request & AuthRequest, res: Response, next: NextFun
   }
 };
 
-// Export both middleware functions and CSRF token generator
-export { csrfProtection, generateToken };
+// Export all middleware functions and CSRF token generator
+export { csrfProtection, generateToken, authMiddleware };
 
 export default authMiddleware;

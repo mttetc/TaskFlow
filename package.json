@@ -1,7 +1,8 @@
 {
-  "name": "todo-monorepo",
+  "name": "taskflow-monorepo",
   "version": "1.0.0",
   "private": true,
+  
   "workspaces": {
     "packages": ["server", "client"],
     "nohoist": ["**"]
@@ -20,7 +21,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "A dockerized full stack todo application that uses a NodeJS server, a PostgreSQL database, a Prisma ORM, and JWT Authentication.",
+  "description": "A dockerized full stack Kanban-style task management application with a NodeJS server, PostgreSQL database, Prisma ORM, and JWT Authentication.",
   "devDependencies": {
     "concurrently": "^8.2.2"
   }

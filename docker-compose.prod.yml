@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  client:
+    build:
+      target: production
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://api.yourdomain.com # Change this to your production API domain
+
+  server:
+    build:
+      target: production
+    command: npm start
+    environment:
+      - NODE_ENV=production
+      - CLIENT_URL=http://yourdomain.com # Change this to your production client domain
+      - JWT_SECRET=${JWT_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+
+  db:
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_prod_data:

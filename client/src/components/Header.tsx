@@ -1,11 +1,18 @@
 import { Button } from "@/components/ui/button";
+import { useGetTasks } from '@/hooks/tasks/useGetTasks';
 
 interface HeaderProps {
-  openTasksCount: number;
   onLogout: () => void;
 }
 
-export function Header({ openTasksCount, onLogout }: HeaderProps) {
+export function Header({ onLogout }: HeaderProps) {
+  const { data: tasks = [], isLoading: isTasksLoading } = useGetTasks();
+  const openTasksCount = tasks.filter(task => task.status !== 'COMPLETED').length;
+
+  if (isTasksLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-3xl font-bold">

@@ -1,6 +1,6 @@
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Header } from '@/components/Header';
-import { TabNavigation } from '@/components/TabNavigation';
+import { TasksPage } from '@/components/tasks/TasksPage';
 import { useAuthStore } from '@/stores/auth';
 import { useCheckAuth } from '@/hooks/useCheckAuth';
 import { api, resetCsrfToken } from '@/lib/api';
@@ -15,7 +15,7 @@ function LoadingSpinner() {
 
 function App() {
   const { isAuthenticated, setAuthenticated } = useAuthStore();
-  const { isLoading } = useCheckAuth();
+  const { isLoading: isAuthLoading } = useCheckAuth();
 
   const handleAuthSuccess = () => {
     setAuthenticated(true);
@@ -33,7 +33,7 @@ function App() {
   };
 
   // Show loading spinner while checking auth status
-  if (isLoading) {
+  if (isAuthLoading) {
     return <LoadingSpinner />;
   }
 
@@ -46,13 +46,9 @@ function App() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl p-6 space-y-6">
-      <Header
-        openTasksCount={0}
-        onLogout={logout}
-      />
-
-      <TabNavigation />
+    <div className="container mx-auto p-6 max-w-[1600px]">
+      <Header onLogout={logout} />
+      <TasksPage />
     </div>
   );
 }
