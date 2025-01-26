@@ -59,7 +59,10 @@ RUN apk add --no-cache \
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
+
+# Install TypeScript globally for build
+RUN npm install -g typescript
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -77,5 +80,4 @@ RUN chmod +x /usr/local/bin/wait-for
 
 EXPOSE 3000
 
-# Modified CMD to wait for database and run migrations before starting
-CMD ["/bin/sh", "-c", "wait-for db:5432 -- npx prisma migrate deploy && npm start"]
+CMD ["npm", "start"]
