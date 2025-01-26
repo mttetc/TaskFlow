@@ -19,43 +19,46 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAddTask } from "@/hooks/tasks/useAddTask";
-import { CreateTask, CreateTaskSchema, PriorityEnum } from "@/schemas/task";
-import { useToast } from "@/hooks/use-toast";
+import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
+import { CreateTask, CreateTaskSchema, PriorityEnum, Task } from "@/schemas/task";
 import { DialogClose } from "@/components/ui/dialog";
+import { DatePicker } from "../ui/datepicker";
 
+interface TaskFormProps {
+  taskId?: number;
+  initialValues?: Task;
+  onClose: () => void;
+}
 
-
-export function TaskForm() {
-  const { toast } = useToast();
-  const { mutateAsync: addTask } = useAddTask();
+export function TaskForm({ taskId, initialValues, onClose }: TaskFormProps) {
+  const { mutateAsync: addTask } = useAddTask({ 
+      onSuccess: () => {
+        onClose();
+      }}
+  );
+  const { mutateAsync: updateTask } = useUpdateTask({ 
+      onSuccess: () => {
+        onClose();
+      }}
+  );
 
   const form = useForm<CreateTask>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      priority: "MEDIUM",
-      category: "",
-      dueDate: null,
-      status: "TODO",
+      title: initialValues?.title ?? "",
+      description: initialValues?.description ?? "",
+      priority: initialValues?.priority ?? "MEDIUM",
+      category: initialValues?.category ?? "",
+      dueDate: initialValues?.dueDate ?? null,
+      status: initialValues?.status ?? "TODO",
     },
   });
 
   const onSubmit = async (data: CreateTask) => {
-    try {
+    if (taskId) {
+      await updateTask({ id: taskId, data });
+    } else {
       await addTask(data);
-      form.reset();
-      toast({
-        title: "Success",
-        description: "Task created successfully",
-      });
-    } catch (error) {
-      console.error("Failed to create task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create task. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -143,10 +146,11 @@ export function TaskForm() {
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input
-                  type="datetime-local"
-                  value={value || ""}
-                  {...field}
+                <DatePicker 
+                  date={value ? new Date(value) : undefined}
+                  onSelect={(date) => field.onChange(date ? date.toISOString() : undefined)}
+                  placeholder="Pick a date"
+                  className="w-full"
                 />
               </FormControl>
               <FormMessage />
@@ -159,9 +163,7 @@ export function TaskForm() {
               Cancel
             </Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button type="submit">Create Task</Button>
-          </DialogClose>
+          <Button type="submit">{taskId ? "Save Changes" : "Create Task"}</Button>
         </div>
       </form>
     </Form>

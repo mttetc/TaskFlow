@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TASKS_QUERY_KEY, TaskMutationResponse, validateTaskMutationResponse } from './types';
+import { TASKS_QUERY_KEY } from './types';
 import { api, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/auth';
-import { Task } from '@/schemas/task';
+import { Task, TaskSchema } from '@/schemas/task';
 
 export function useDeleteTask() {
   const queryClient = useQueryClient();
@@ -11,15 +11,17 @@ export function useDeleteTask() {
   const setAuthenticated = useAuthStore(state => state.setAuthenticated);
 
   return useMutation({
-    mutationFn: async (id: number): Promise<TaskMutationResponse> => {
+    mutationFn: async (id: number): Promise<Task> => {
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new Error('Invalid task ID');
+      }
+
       try {
         const response = await api<unknown>(`/tasks/${id}`, {
           method: 'DELETE'
         });
-        console.log('Delete response:', response);
 
-        const result = validateTaskMutationResponse(response);
-        console.log('Delete validation result:', result);
+        const result = TaskSchema.safeParse(response);
         
         if (!result.success) {
           console.error('Delete validation error:', result.error);
@@ -64,11 +66,11 @@ export function useDeleteTask() {
         variant: 'destructive'
       });
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
       toast({
         title: 'Success',
-        description: data.message || 'Task deleted successfully'
+        description: 'Task deleted successfully'
       });
     },
     onSettled: () => {

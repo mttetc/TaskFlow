@@ -9,16 +9,11 @@ export function useCheckAuth() {
   return useQuery<AuthCheckResponse>({
     queryKey: ['auth', 'check'],
     queryFn: async () => {
-      console.log('Checking authentication status...');
       try {
         // Check auth status - will also get CSRF token if authenticated
         const response = await api('/auth/check');
         const validatedResponse = validateAuthCheckResponse(response);
-        console.log('Auth check result:', { 
-          isAuthenticated: validatedResponse.isAuthenticated, 
-          hasCsrfToken: !!validatedResponse.csrfToken,
-          user: validatedResponse.user
-        });
+
         setAuthenticated(validatedResponse.isAuthenticated);
         return validatedResponse;
       } catch (error) {

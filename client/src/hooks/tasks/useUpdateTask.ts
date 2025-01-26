@@ -1,22 +1,31 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TASKS_QUERY_KEY, TaskMutationResponse, validateTaskMutationResponse } from './types';
+import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+import { TASKS_QUERY_KEY } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
-import { Task, UpdateTask } from '@/schemas/task';
+import { Task, TaskSchema, UpdateTask, UpdateTaskSchema } from '@/schemas/task';
 
 interface UpdateTaskPayload {
   id: number;
   data: UpdateTask;
 }
 
-export function useUpdateTask() {
+export function useUpdateTask(options?: UseMutationOptions<unknown, Error, unknown, unknown>) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const setAuthenticated = useAuthStore(state => state.setAuthenticated);
 
   return useMutation({
-    mutationFn: async ({ id, data }: UpdateTaskPayload): Promise<TaskMutationResponse> => {
+    mutationFn: async ({ id, data }: UpdateTaskPayload): Promise<Task> => {
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new Error('Invalid task ID');
+      }
+
+      const validationResult = UpdateTaskSchema.safeParse(data);
+      if (!validationResult.success) {
+        throw new Error(`Invalid task data: ${validationResult.error.message}`);
+      }
+
       try {
         const response = await api<unknown>(`/tasks/${id}`, {
           method: 'PUT',
@@ -25,10 +34,8 @@ export function useUpdateTask() {
           },
           body: JSON.stringify(data)
         });
-        console.log('Update response:', response);
 
-        const result = validateTaskMutationResponse(response);
-        console.log('Update validation result:', result);
+        const result = TaskSchema.safeParse(response);
         
         if (!result.success) {
           console.error('Update validation error:', result.error);
@@ -75,12 +82,13 @@ export function useUpdateTask() {
         variant: 'destructive'
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
       toast({
         title: 'Success',
-        description: data.message || 'Task updated successfully'
+        description: 'Task updated successfully'
       });
+      options?.onSuccess?.(data, variables, context);
     },
     onSettled: () => {
       // Always refetch after error or success

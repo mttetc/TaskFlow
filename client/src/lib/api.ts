@@ -78,12 +78,7 @@ export async function api<TResponse>(url: string, options: RequestInit = {}): Pr
 
   try {
     const response = await fetch(`/api${url}`, config);
-    console.log('Response received:', {
-      status: response.status,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-    
+
     const contentType = response.headers.get('content-type');
     const data = contentType?.includes('application/json') ? await response.json() : null;
     

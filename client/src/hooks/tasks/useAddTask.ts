@@ -1,26 +1,29 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TASKS_QUERY_KEY, TaskMutationResponse, validateTaskMutationResponse } from './types';
+import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+import { TASKS_QUERY_KEY } from './types';
 import { api, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/auth';
-import { CreateTask, Task } from '@/schemas/task';
+import { CreateTask, Task, TaskSchema } from '@/schemas/task';
 
-export function useAddTask() {
+export function useAddTask(options?: UseMutationOptions<unknown, Error, unknown, unknown>) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const setAuthenticated = useAuthStore(state => state.setAuthenticated);
 
   return useMutation({
-    mutationFn: async (taskData: CreateTask): Promise<TaskMutationResponse> => {
+    mutationFn: async (taskData: CreateTask): Promise<Task> => {
+      const validationResult = TaskSchema.safeParse(taskData);
+      if (!validationResult.success) {
+        throw new Error(`Invalid task data: ${validationResult.error.message}`);
+      }
+
       try {
         const response = await api<unknown>('/tasks', {
           method: 'POST',
           body: JSON.stringify(taskData)
         });
-        console.log('Create task response:', response);
 
-        const result = validateTaskMutationResponse(response);
-        console.log('Create task validation result:', result);
+        const result = TaskSchema.safeParse(response);
         
         if (!result.success) {
           console.error('Create task validation error:', result.error);
@@ -29,6 +32,7 @@ export function useAddTask() {
         
         return result.data;
       } catch (error) {
+        console.error('Failed to create task:', error);
         if (error instanceof ApiError && error.status === 401) {
           setAuthenticated(false);
         }
@@ -65,17 +69,17 @@ export function useAddTask() {
         variant: 'destructive'
       });
     },
-    onSuccess: (data) => {
-      console.log('Create task success, invalidating queries');
+    onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
       
       toast({
         title: 'Success',
-        description: data.message || 'Task added successfully'
+        description: 'Task added successfully'
       });
+
+      options?.onSuccess?.(data, variables, context);
     },
     onSettled: () => {
-      console.log('Create task settled, forcing refetch');
       queryClient.invalidateQueries({ 
         queryKey: TASKS_QUERY_KEY,
         exact: true,

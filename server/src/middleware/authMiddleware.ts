@@ -17,11 +17,6 @@ const { generateToken, doubleCsrfProtection } = doubleCsrf({
   },
   size: 64,
   getTokenFromRequest: (req) => {
-    console.log('CSRF Headers:', {
-      all: req.headers,
-      csrfToken: req.headers['csrf-token'],
-      cookies: req.cookies
-    });
     const token = req.headers['csrf-token'];
     return Array.isArray(token) ? token[0] : token;
   },
@@ -29,13 +24,6 @@ const { generateToken, doubleCsrfProtection } = doubleCsrf({
 
 // Custom CSRF protection middleware with logging
 const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
-  console.log('CSRF Protection Middleware:', {
-    method: req.method,
-    path: req.path,
-    headers: req.headers,
-    cookies: req.cookies
-  });
-
   try {
     doubleCsrfProtection(req, res, (err: any) => {
       if (err) {

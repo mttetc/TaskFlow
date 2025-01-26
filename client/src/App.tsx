@@ -1,9 +1,9 @@
 import { AuthForm } from '@/components/auth/AuthForm';
-import { Header } from '@/components/Header';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 import { TasksPage } from '@/components/tasks/TasksPage';
 import { useAuthStore } from '@/stores/auth';
 import { useCheckAuth } from '@/hooks/useCheckAuth';
-import { api, resetCsrfToken } from '@/lib/api';
 
 function LoadingSpinner() {
   return (
@@ -21,17 +21,6 @@ function App() {
     setAuthenticated(true);
   };
 
-  const logout = async () => {
-    try {
-      await api('/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setAuthenticated(false);
-      resetCsrfToken();
-    }
-  };
-
   // Show loading spinner while checking auth status
   if (isAuthLoading) {
     return <LoadingSpinner />;
@@ -46,9 +35,12 @@ function App() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-[1600px]">
-      <Header onLogout={logout} />
-      <TasksPage />
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 container mx-auto p-6 max-w-[1600px]">
+        <TasksPage />
+      </main>
+      <Footer />
     </div>
   );
 }

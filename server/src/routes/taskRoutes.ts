@@ -26,19 +26,7 @@ router.get('/', async (req: Request & AuthRequest, res: Response) => {
 // Create a new task
 router.post('/', csrfProtection, async (req: Request & AuthRequest, res: Response) => {
     try {
-        console.log('Request body:', req.body);
-        console.log('User ID:', req.userId);
-        
         const { title, description, priority, category, dueDate } = req.body;
-        
-        console.log('Extracted data:', {
-            title,
-            description,
-            priority,
-            category,
-            dueDate,
-            userId: req.userId
-        });
 
         const task = await prisma.task.create({
             data: {
@@ -52,7 +40,6 @@ router.post('/', csrfProtection, async (req: Request & AuthRequest, res: Respons
             }
         });
         
-        console.log('Created task:', task);
         res.json(task);
     } catch (error) {
         console.error('Error creating task:', error);
