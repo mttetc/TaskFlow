@@ -6,9 +6,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
-RUN npm install @tailwindcss/vite@next @radix-ui/react-select
+# Install all dependencies in one layer
+RUN npm install && \
+    npm install @tailwindcss/vite@next @radix-ui/react-select
 
 # Copy project files
 COPY . .
@@ -24,18 +24,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
-RUN npm install @tailwindcss/vite@next
+# Install dependencies including build dependencies
+RUN npm ci && \
+    npm install @tailwindcss/vite@next
 
 # Copy project files
 COPY . .
 
 # Build the project
 RUN npm run build
-
-# Show the contents of the dist directory
-RUN ls -la dist/
 
 # Production stage
 FROM nginx:alpine AS production
